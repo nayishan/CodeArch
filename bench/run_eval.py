@@ -63,14 +63,28 @@ def evaluate_one(task: dict, repo: Path, work_root: Path, agent_fn) -> dict:
             err = f"agent_error: {e}"
         agent_secs = time.time() - t0
 
-        if not patch or not patch.strip():
+        # submit_patch 在无改动时返回 "NO_PATCH: ..."，工具出错时返回 "error: ..."。
+        # 这些都不是补丁，不能当作 diff 去 apply。
+        pstrip = (patch or "").strip()
+        if not pstrip:
             return {"instance_id": iid, "resolved": False,
                     "error": err or "empty_patch", "agent_seconds": round(agent_secs, 1)}
-
-        # 应用 agent 补丁
-        if not B._apply_patch(wt, patch):
+        if pstrip.startswith(("NO_PATCH", "error:")):
             return {"instance_id": iid, "resolved": False,
-                    "error": "agent_patch_apply_failed", "agent_seconds": round(agent_secs, 1)}
+                    "error": f"no_patch: {pstrip[:80]}", "agent_seconds": round(agent_secs, 1)}
+        if not pstrip.startswith(("diff --git", "--- ")):
+            return {"instance_id": iid, "resolved": False,
+                    "error": "patch_not_a_diff", "agent_seconds": round(agent_secs, 1)}
+
+        # agent 有两种可能：
+        #   a) 直接在 worktree 里改文件（GemmaAgent 就是这样），补丁只是 diff 快照
+        #   b) 只返回补丁文本、未动文件（oracle 模式）
+        # 前者再 apply 会重复应用失败，所以先看 worktree 是否已脏。
+        dirty = B.git(wt, "status", "--porcelain").stdout.strip()
+        if not dirty:
+            if not B._apply_patch(wt, patch):
+                return {"instance_id": iid, "resolved": False,
+                        "error": "agent_patch_apply_failed", "agent_seconds": round(agent_secs, 1)}
 
         # 应用官方 test_patch（判分测试）
         if not B._apply_patch(wt, task["test_patch"]):

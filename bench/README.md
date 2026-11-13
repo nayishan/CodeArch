@@ -76,3 +76,39 @@ python bench/run_eval.py --limit 5
   因此本 benchmark 的难度**分布不同**，分数不能直接外推到官方 129 题。
 - 官方提供 `snapshots/*.tgz` 和预建图/embedding；这里用 `git worktree` + 现场建图。
 - 官方的依赖环境由 Docker 镜像固定；本地是共享 venv，版本漂移会导致部分任务失真。
+
+---
+
+## Baseline v1（2026-11-13）
+
+**`1/15 PASS (6.7%)`** — 结果文件 `results/baseline_v1.json`
+
+| 指标 | 值 |
+|---|---|
+| PASS 率 | 1/15 (6.7%) |
+| 平均耗时 | 164s（中位 153s） |
+| 平均补丁行数 | 21.2 |
+| 零补丁任务 | 3 |
+
+配置：`USE_THINKING=False`, `MAX_OUTPUT_TOKENS=4096`, `MAX_STEPS=24`, Ollama `gemma4:e4b`。
+
+唯一 PASS：`rich_e9c9e434`（Clear hashed cache when clearing meta，71.9s）。
+
+### 失败归因
+
+| 类别 | 数量 | 说明 |
+|---|---|---|
+| 逻辑改错（断言不符） | 7 | 改了但没改对，如 `rich_15cc59b1` 改 `case_sensitive` 却没改调用点 → `AttributeError` |
+| 语法错误（改坏代码） | 1 | `rich_16b38304` 把 `table.py` 改出语法错误 |
+| 未产出补丁 | 3 | 24 步用满仍未 edit，`submit_patch` 返回 `NO_PATCH` |
+| 环境/测试无关 | 4 | 如 `rich_b17c6169` 的 `OSError: pytest: reading from stdin`（交互测试） |
+
+### 已修复的判分器 bug
+
+1. **补丁重复应用**：agent 在 worktree 内直接改文件后，`submit_patch` 返回的 diff 是快照；
+   原判分器再次 apply 同一 diff → `patch does not apply` → 假失败。
+   修复：先 `git status --porcelain` 判断 worktree 是否已脏，脏则跳过 apply。
+2. **错误消息当补丁**：`submit_patch` 无改动时返回 `NO_PATCH: ...`，被判分器当 diff 应用。
+   修复：识别 `NO_PATCH` / `error:` 前缀，且要求补丁以 `diff --git` 或 `--- ` 开头。
+
+这两处 bug 曾让 3/15 任务被误判为「补丁应用失败」，实际是真实失败。

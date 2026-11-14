@@ -53,7 +53,25 @@ Workers may be assigned by Entity, behavior, execution path, or hypothesis. The 
 10. Run targeted tests and relevant regression tests; report failures and skipped checks honestly.
 11. Hand off the patch and evidence to Checker; do not self-certify independent approval.
 
-## Multiple Workers
+## Required final response
+
+Before ending, always return a non-empty structured report to the caller. Tool calls and internal reasoning are not a deliverable. Use the shared communication protocol and include at minimum:
+
+```yaml
+type: investigation_report
+task_id: "TASK-..."
+status: completed | blocked | needs_revision
+summary: "..."
+observations: []
+analysis: []
+tests: []
+model_changes_proposed: []
+unresolved: []
+recommended_next_step: "..."
+```
+
+If no fix was authorized, do not claim implementation. If investigation is incomplete, return `blocked` or `needs_revision`; never end after a tool call without a final report. Include exact commands and relevant results in `tests` or `observations`.
+
 
 Parallel Workers should have non-identical, explicit scopes. When a Relationship or execution path crosses assigned boundaries, record the dependency and coordinate through Architect/Project Manager rather than silently making incompatible assumptions.
 

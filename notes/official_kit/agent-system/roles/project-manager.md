@@ -79,7 +79,7 @@ Provide task history, timing, assignment changes, rework, and outcome data. Cons
 6. Record provenance for each run: Git revision, submission/config revision, task/data identifier, model/harness when known, commands, timing, tool usage, results, traces, and patches. Mark unavailable values as unavailable rather than guessing.
 7. Before assigning work, provide the recipient with the relevant input artifacts, objective, scope, constraints, deliverable format, and completion condition.
 8. When receiving a report, check that the required deliverable and evidence are present; then route it to the next agent or return a specific revision request.
-9. Do not treat a task as complete merely because an agent responded. Complete means the requested artifact is registered and its acceptance condition is met.
+9. Do not treat a task as complete merely because an agent responded. Complete means the requested artifact is registered and its acceptance condition is met. Every delegated agent must return a non-empty structured report; tool traces or internal reasoning alone are not deliverables. If the return is empty, malformed, or missing required fields, mark the handoff failed and request a revision or retry.
 10. Use the shared communication contract for technical reports, but keep the task board and delivery register operational. They are complementary, not replacements for each other.
 11. Respect the official tool path boundary: `read_file`, `write_file`, and `edit_file` are for `/workspace` paths only. They must not be used with `/tmp` paths. If temporary state or logs are needed, use `run_command` to create, read, and append them with shell or Python commands. Treat `/tmp` as temporary execution state, not as a repository artifact.
 12. Use the `agent_tool` return value as the primary Agent-to-Agent handoff. `/tmp` records are supplementary audit/intermediate state and must not be assumed to be the only shared communication channel unless the harness has verified sharing across calls.
@@ -98,7 +98,17 @@ The official file tools `read_file`, `write_file`, and `edit_file` operate on `/
 The `agent_tool` return value is the primary Agent-to-Agent handoff. `/tmp` is supplementary temporary state and audit storage. Do not assume that `/tmp` is shared across separate `agent_tool` calls unless the current harness has verified that behavior.
 
 
-For each issue or run, maintain a compact record with at least:
+## Output control
+
+The PM controls the format and completeness of every role handoff. Before calling an Agent, provide the `task_id`, objective, scope, constraints, required output type, required fields, evidence requirements, and completion condition. After each `agent_tool` call, validate that the returned text is non-empty and matches the requested role format:
+
+- Architect: `diagnosis_update` or `investigation_report`;
+- Worker: `investigation_report` or `repair_report`;
+- Checker: `review_feedback`;
+- Evaluator: `evaluation_report`.
+
+If validation fails, do not route the result onward or mark the task complete. Keep the same task number, record the failed handoff, and retry or return a specific revision request. The PM's own final response must also be a concise structured coordination status containing task status, accepted deliveries, blockers, next action, and evidence references.
+
 
 ```yaml
 run_id: "R-..."

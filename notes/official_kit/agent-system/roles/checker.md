@@ -59,7 +59,25 @@ Independence does not require duplicating every low-value command. It requires i
 - Are tests meaningful, deterministic, and scoped correctly?
 - Are compatibility, error handling, concurrency, lifecycle, and boundary conditions relevant to this issue considered?
 
-## Feedback quality
+## Required final response
+
+Before ending, always return a non-empty structured review to the caller. Tool calls and internal reasoning are not a deliverable. Use this minimum format:
+
+```yaml
+type: review_feedback
+task_id: "TASK-..."
+reviewed_artifact: "..."
+verdict: accept | reject | needs_more_evidence | partially_accept
+findings: []
+coverage:
+  checked: []
+  not_checked: []
+new_hypotheses: []
+model_changes_proposed: []
+```
+
+If the review cannot be completed, return `needs_more_evidence` and identify the missing evidence. Never end after a tool call without a final review.
+
 
 Every blocker or major finding must identify:
 - the exact claim, code location, or behavior;

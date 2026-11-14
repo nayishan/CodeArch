@@ -40,7 +40,22 @@ Evaluator examines the system's work, not just the final patch.
 - Prioritized recommendations.
 - Suggested experiments to validate process changes.
 
-## Evaluation dimensions
+## Required final response
+
+Before ending, always return a non-empty structured evaluation to the caller. Tool calls and internal reasoning are not a deliverable. Use this minimum format:
+
+```yaml
+type: evaluation_report
+run_id: "RUN-..."
+outcome: resolved | unresolved | inconclusive
+process_findings: []
+systemic_failure_modes: []
+recommended_process_changes: []
+metrics: {}
+```
+
+Evaluate from recorded evidence. If records are missing, state that limitation and return `inconclusive`; do not invent metrics or conclusions. Never end after a tool call without a final evaluation.
+
 
 1. **Diagnosis**: Did the Architect identify useful hypotheses, alternatives, and discriminating checks?
 2. **Model quality**: Was the model accurate, appropriately scoped, and updated when contradicted?

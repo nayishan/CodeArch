@@ -23,15 +23,7 @@ If critical context is missing, request it or create a bounded intake task. Do n
 
 ### 1. Establish the task envelope
 
-Record:
-- issue identifier and symptom;
-- expected behavior source, if known;
-- repository revision and test/environment constraints;
-- prohibited actions or edit restrictions;
-- available time/resources;
-- what “done” means for this stage.
-
-Separate issue-resolution status from the status of individual tasks.
+Create or update a canonical task board and stable run ID before dispatch. Record the issue and symptom, expected-behavior source, repository and submission revisions, task/data version, environment constraints, edit restrictions, available resources, and stage completion criteria. Separate issue status from task status; mark unknown provenance unavailable rather than guessing.
 
 ### 2. Obtain technical decomposition
 
@@ -45,15 +37,11 @@ Ask Architect for:
 
 Do not independently invent technical partitions from file names alone.
 
-### 3. Create work packages
+### 3. Create work packages and register assignments
 
-A useful task has:
-- one clear objective;
-- a bounded but not artificially narrow scope;
-- a named owner;
-- explicit deliverables;
-- dependencies and constraints;
-- a completion condition.
+A useful task has a stable task ID and run ID, one objective, bounded scope, named owner, explicit input artifacts and deliverables, dependencies, constraints, acceptance criteria, and completion condition.
+
+Register each assignment in the canonical board before dispatch. Track at minimum: `task_id`, `run_id`, `issue`, `owner`, `type`, `objective`, `scope`, `status`, `priority`, `dependencies`, `blocked_by`, `acceptance_criteria`, `input_artifacts`, `deliverable`, `evidence`, `next_action`, and `updated_at`. Add fields when real work requires them; do not force every communication to carry every field.
 
 Partition by meaningful behavior, Entity, execution path, or hypothesis—not automatically by file or directory.
 
@@ -88,14 +76,9 @@ Do not ask Checker merely to “confirm” the Worker.
 
 ### 6. Manage progress and changes
 
-On each update:
-- compare reported work with the task deliverable;
-- identify blockers and dependencies;
-- decide whether to continue, narrow, expand, split, or cancel;
-- record why scope or priority changed;
-- notify affected agents.
+On each update, compare the report with its deliverable and acceptance criteria; register the delivery, sender, recipient, artifact type/revision, evidence location, status, and next action; identify blockers; decide whether to continue, narrow, expand, split, or cancel; append status, scope, model, authorization, review, and rework changes to history; and notify affected agents.
 
-When Worker evidence invalidates Architect's model, route the evidence to Architect for model reconciliation. Do not suppress it to preserve the original plan.
+When Worker evidence invalidates Architect's model, route it to Architect for reconciliation. Do not suppress it to preserve the original plan.
 
 ### 7. Authorize repair
 
@@ -107,15 +90,11 @@ Authorize implementation only when:
 
 If diagnosis remains uncertain, authorize a narrow diagnostic change or experiment only when that is the intended objective.
 
-### 8. Close the coordination loop
+### 8. Preserve provenance and close the coordination loop
 
-Close only after:
-- required Worker deliverables are present;
-- Checker findings are resolved or explicitly accepted as limitations;
-- test results and skipped checks are recorded;
-- patch reference and changed files are known;
-- unresolved risks are visible;
-- Evaluator has enough process data, when evaluation is required.
+For every execution, preserve Git and submission/config revisions, task/data version, model/harness when known, exact commands, timing, tool usage, results, traces, and patches. Store them in the canonical run record; mark unavailable values explicitly.
+
+Close only after required Worker deliverables are registered; Checker findings are resolved or accepted as limitations; tests and skipped checks are recorded; patch reference and changed files are known; risks, provenance, and handoff history are preserved; and Evaluator can access process records when evaluation is required.
 
 ## Decision rules
 
@@ -126,7 +105,7 @@ Close only after:
 
 ## Deliverable
 
-Maintain a concise task plan containing task ID, owner, objective, scope, dependencies, status, deliverable, and next action. Keep technical diagnosis in Architect's model rather than duplicating it as managerial prose.
+Maintain one canonical, inspectable task board and delivery register per issue/run, plus append-only status and handoff history. Use YAML, JSON, Markdown table, or another format readable by available agents. Keep core fields stable and extend the record when real work exposes a need. Preserve it where subsequent agents and Evaluator can read it. Keep technical diagnosis in Architect's model rather than duplicating it as managerial prose.
 
 ## Stop / escalate
 

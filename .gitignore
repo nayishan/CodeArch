@@ -23,6 +23,11 @@ bench/tasks/_worktrees/
 bench/results/_worktrees/
 bench/results/_wt*/
 
+# Official Kaggle smoke5 data: large assets are downloaded separately
+bench/official_smoke5/data/snapshots/*.tgz
+bench/official_smoke5/data/graphs/*.json
+bench/official_smoke5/data/embeddings/*.npz
+
 # 其他
 .DS_Store
 *.log

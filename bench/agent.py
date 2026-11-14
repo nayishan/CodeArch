@@ -38,7 +38,7 @@ SYSTEM_PROMPT = """You are an autonomous software engineer fixing a bug in a Pyt
 ## Mandatory workflow
 1. EXTRACT identifiers from the issue: function names, class names, error messages,
    file paths, backticked code. Quote them exactly.
-2. LOCATE code: call localize_code with a query built from those identifiers
+2. LOCATE code: use `search_similar_code` with a query built from those identifiers
    (NOT the whole issue text).
 3. READ the most relevant files before changing anything.
 4. Make the MINIMAL fix. Small patches win: the median real fix is 1 file, ~8 lines.
@@ -49,11 +49,10 @@ SYSTEM_PROMPT = """You are an autonomous software engineer fixing a bug in a Pyt
 ## Rules
 - Never rewrite whole files. Use edit_file with a small unique old_string.
 - Do not modify test files; they are the grading oracle.
-- If localize_code returns nothing useful, fall back to `run_command("grep -rn ...")`.
+- If search_similar_code returns nothing useful, fall back to `run_command("grep -rn ...")`.
 - Keep tool outputs short; do not dump entire large files.
 
 ## Tools
-- localize_code: BM25 over Python AST. Best first move.
 - read_file(filepath, start_line, end_line)
 - edit_file(filepath, old_string, new_string)
 - write_file(filepath, content)
@@ -64,24 +63,8 @@ SYSTEM_PROMPT = """You are an autonomous software engineer fixing a bug in a Pyt
 - submit_patch()
 """
 
-# 暴露给模型的工具 schema（与官方 9 工具 + localize_code 对齐）
+# 暴露给模型的官方 9 工具 schema
 TOOL_SCHEMAS: list[dict[str, Any]] = [
-    {
-        "type": "function",
-        "function": {
-            "name": "localize_code",
-            "description": "Rank repository functions/classes by relevance to a query using BM25 over Python AST spans. Use extracted identifiers, not the whole issue. Call this first.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "query": {"type": "string", "description": "Identifiers and keywords, e.g. 'Panel title background style'"},
-                    "top": {"type": "integer", "description": "Number of symbols to return (default 15)"},
-                    "files": {"type": "integer", "description": "Number of files to return (default 5)"},
-                },
-                "required": ["query"],
-            },
-        },
-    },
     {
         "type": "function",
         "function": {
@@ -216,8 +199,10 @@ class GemmaAgent:
         self.messages: list[dict[str, Any]] = [
             {"role": "system", "content": SYSTEM_PROMPT}
         ]
+        self.tool_schemas = TOOL_SCHEMAS
         self.n_llm_calls = 0
         self.n_tool_calls = 0
+
 
     # ---- Ollama 调用 ----
     def _chat(self) -> dict[str, Any]:
@@ -225,7 +210,7 @@ class GemmaAgent:
             "model": self.model,
             "stream": False,
             "messages": self.messages,
-            "tools": TOOL_SCHEMAS,
+            "tools": self.tool_schemas,
             "think": USE_THINKING,
             "options": {
                 "num_ctx": NUM_CTX,

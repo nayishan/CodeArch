@@ -27,7 +27,12 @@ The contract consists of four complementary modules:
 
 These modules are not four sequential workflow stages. They are shared rules used whenever relevant.
 
-## Required behavior
+## Tool boundary and handoff storage
+
+The official file tools `read_file`, `write_file`, and `edit_file` are restricted to repository paths under `/workspace`. Never pass a `/tmp` path to them. For temporary state, intermediate reports, and audit logs under `/tmp`, use `run_command` with shell or Python to create, read, and append files. Keep temporary files out of `/workspace` so they cannot enter the patch.
+
+The `agent_tool` return value is the primary Agent-to-Agent handoff. `/tmp` is supplementary state and audit storage; do not assume it is shared across separate `agent_tool` calls until the harness verifies that behavior.
+
 
 1. Use the defined terms consistently. If a term does not fit, explain the mismatch instead of silently redefining it.
 2. Separate **definition**, **implementation**, and **invocation**. A correct definition can have a faulty implementation; a correct implementation can be invoked incorrectly.

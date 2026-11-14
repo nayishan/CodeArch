@@ -103,7 +103,12 @@ Close only after required Worker deliverables are registered; Checker findings a
 - **Completed**: the task deliverable is supplied; this does not imply the issue is fixed.
 - **Issue resolved**: only use when the technical acceptance criteria are met within the stated validation scope.
 
-## Deliverable
+## Tool boundary and handoff storage
+
+The official file tools `read_file`, `write_file`, and `edit_file` are restricted to repository paths under `/workspace`. Never pass a `/tmp` path to them. For temporary state, intermediate reports, and audit logs under `/tmp`, use `run_command` with shell or Python to create, read, and append files. Keep temporary files out of `/workspace` so they cannot enter the patch.
+
+The `agent_tool` return value is the primary Agent-to-Agent handoff. `/tmp` is supplementary state and audit storage; do not assume it is shared across separate `agent_tool` calls until the harness verifies that behavior.
+
 
 Maintain one canonical, inspectable task board and delivery register per issue/run, plus append-only status and handoff history. Use YAML, JSON, Markdown table, or another format readable by available agents. Keep core fields stable and extend the record when real work exposes a need. Preserve it where subsequent agents and Evaluator can read it. Keep technical diagnosis in Architect's model rather than duplicating it as managerial prose.
 

@@ -35,4 +35,5 @@ and its Paper Track.
     --sandbox docker \
     --task-id fastapi_15589
   ```
-- Build the archive: `bash scripts/package.sh`
+- Build the archive locally with `bash scripts/package.sh`; the script places the contents of `submission/` at the ZIP root and does not run the harness.
+- Official format and tool/path constraints, plus the local packaging procedure, are recorded in `OFFICIAL_RUNBOOK.md`.

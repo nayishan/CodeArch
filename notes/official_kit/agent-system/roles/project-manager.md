@@ -81,7 +81,9 @@ Provide task history, timing, assignment changes, rework, and outcome data. Cons
 8. When receiving a report, check that the required deliverable and evidence are present; then route it to the next agent or return a specific revision request.
 9. Do not treat a task as complete merely because an agent responded. Complete means the requested artifact is registered and its acceptance condition is met.
 10. Use the shared communication contract for technical reports, but keep the task board and delivery register operational. They are complementary, not replacements for each other.
-11. Do not create one Worker per file by default. Split work around meaningful entities, behaviors, execution paths, or independent hypotheses.
+11. Respect the official tool path boundary: `read_file`, `write_file`, and `edit_file` are for `/workspace` paths only. They must not be used with `/tmp` paths. If temporary state or logs are needed, use `run_command` to create, read, and append them with shell or Python commands. Treat `/tmp` as temporary execution state, not as a repository artifact.
+12. Use the `agent_tool` return value as the primary Agent-to-Agent handoff. `/tmp` records are supplementary audit/intermediate state and must not be assumed to be the only shared communication channel unless the harness has verified sharing across calls.
+13. Do not create one Worker per file by default. Split work around meaningful entities, behaviors, execution paths, or independent hypotheses.
 12. Avoid overlapping assignments unless overlap is intentional for independent verification.
 13. Preserve cross-entity dependencies; do not let task boundaries erase a relationship that spans multiple areas.
 14. Require concrete deliverables and status updates, not vague “investigating” messages.
@@ -89,7 +91,12 @@ Provide task history, timing, assignment changes, rework, and outcome data. Cons
 16. Do not authorize a broad patch merely because a deadline is near.
 17. Keep diagnosis status, implementation status, and issue-resolution status separate.
 
-## Required operational records
+## Official tool and temporary-state boundary
+
+The official file tools `read_file`, `write_file`, and `edit_file` operate on `/workspace` repository paths. Do not pass `/tmp` paths to them; the harness rejects that path traversal. When temporary state, logs, or intermediate reports are needed, use `run_command` with shell or Python to create, read, and append files under `/tmp`. Keep such files out of `/workspace` so they cannot enter the patch.
+
+The `agent_tool` return value is the primary Agent-to-Agent handoff. `/tmp` is supplementary temporary state and audit storage. Do not assume that `/tmp` is shared across separate `agent_tool` calls unless the current harness has verified that behavior.
+
 
 For each issue or run, maintain a compact record with at least:
 

@@ -20,7 +20,73 @@ shasum -a 256 submission.zip > submission.zip.sha256
 
 `submission.zip` 和校验文件只作为本次运行的输入，不直接修改。
 
-## Kaggle Notebook
+## 官方提交要求（以官方 harness 文档为准）
+
+官方提交包必须是一个 ZIP，且 `agent.yaml` 位于 ZIP 根目录。配置中的 `!include` 路径相对于包含它的 YAML 文件解析，不能通过路径遍历访问提交包之外的文件。
+
+`agent.yaml` 及 `sub_agents/*.yaml` 中的 Agent 必须使用官方允许的模型；当前配置使用：
+
+```yaml
+model: gemma-4-31b-it-qat-w4a16-ct
+```
+
+工具只能是官方 harness 工具或通过 `agent_tool` 引用的自定义子 Agent。当前多 Agent 设计使用的是 `agent_tool`：
+
+```yaml
+tools:
+  - agent_tool:
+      config_path: sub_agents/architect.yaml
+```
+
+这与 ADK 原生 `sub_agents:` 层级转交不同；本项目刻意让 Project Manager 通过工具返回值控制调度。`agent_tool` 的返回值是正式 Agent 交接，临时文件不是正式交接渠道。
+
+官方工具的路径边界：
+
+```text
+read_file / write_file / edit_file  -> /workspace 内的仓库路径
+run_command                         -> 在 sandbox 中执行 shell，可读写 /tmp
+```
+
+因此不能用 `write_file` 或 `read_file` 访问 `/tmp`。临时记录只能由 `run_command` 使用 shell/Python 写入 `/tmp`，不能放进 `/workspace`，否则可能被 `submit_patch` 收集进补丁。
+
+参考：
+
+- `notes/official_kit/docs/harness-notes.md`
+- `notes/competition_overview_main.md`
+- `notes/adk_config.md`
+
+## 本地打包步骤
+
+本地只准备提交包，不运行官方模型或官方评分。执行：
+
+```bash
+cd /Users/jiamingwei/gitCode/kaggle/notes/official_kit
+bash scripts/package.sh
+shasum -a 256 submission.zip > submission.zip.sha256
+unzip -t submission.zip
+unzip -l submission.zip | head -30
+```
+
+脚本 `scripts/package.sh` 会删除旧包，并把 `submission/` 的内容直接压缩到 ZIP 根目录，因此必须确认以下文件位于包根目录：
+
+```text
+submission.zip
+├── agent.yaml
+├── prompts/
+├── skills/
+├── sub_agents/
+└── configs/
+```
+
+打包前检查：
+
+```bash
+unzip -p submission.zip agent.yaml >/dev/null
+unzip -t submission.zip
+```
+
+正式运行必须在 Kaggle 官方 Linux 环境完成：上传 `submission.zip`，安装官方 wheelhouse 中的依赖，先运行单题 smoke test，再扩大到多题回归。不要在 macOS 上直接安装或运行 wheelhouse 中的 Linux wheels。
+
 
 在 Kaggle Notebook 中添加：
 

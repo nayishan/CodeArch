@@ -27,11 +27,14 @@ The contract consists of four complementary modules:
 
 These modules are not four sequential workflow stages. They are shared rules used whenever relevant.
 
-## Tool boundary and handoff storage
+## Run-record storage
 
-The official file tools `read_file`, `write_file`, and `edit_file` are restricted to repository paths under `/workspace`. Never pass a `/tmp` path to them. For temporary state, intermediate reports, and audit logs under `/tmp`, use `run_command` with shell or Python to create, read, and append files. Keep temporary files out of `/workspace` so they cannot enter the patch.
+Store the canonical task board, delivery register, append-only history, and agent reports under `/workspace/.agent_state/<run-id>/` so records persist and can be inspected after the run. Use `run_command` to create, read, and append these records. Do not use `read_file`, `write_file`, or `edit_file` for paths outside `/workspace`.
 
-The `agent_tool` return value is the primary Agent-to-Agent handoff. `/tmp` is supplementary state and audit storage; do not assume it is shared across separate `agent_tool` calls until the harness verifies that behavior.
+Before writing run records, use `run_command` to add `.agent_state/` to `/workspace/.git/info/exclude` if it is not already ignored, then verify with `git -C /workspace check-ignore -q .agent_state/<run-id>/task_board.yaml`. Never add run records to the repository or patch. Ordinary scratch/reproduction files may use `/tmp`; they are not canonical run records.
+
+The `agent_tool` return value remains the primary Agent-to-Agent handoff. Do not rely on filesystem sharing across separate `agent_tool` calls unless verified in the runtime.
+
 
 
 1. Use the defined terms consistently. If a term does not fit, explain the mismatch instead of silently redefining it.

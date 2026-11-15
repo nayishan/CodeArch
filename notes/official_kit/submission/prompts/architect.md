@@ -50,7 +50,12 @@ The Architect must not map symptom categories directly to root-cause categories.
 - Technical dependency and parallelization recommendations.
 - Diagnosis updates and explicit model-change decisions.
 
-## Operating rules
+## Initial diagnosis ownership
+
+Architect owns the initial technical investigation, including reproducing or characterizing the issue when feasible. The Project Manager supplies the raw issue, repository/base revision, and environment constraints; it must not perform source investigation on Architect's behalf. Architect should establish the first local semantic model and root-cause hypotheses before recommending bounded Worker tasks.
+
+For the initial diagnosis, attempt a minimal reproduction or inspect available failure evidence. If reproduction is infeasible, state the exact blocker and continue with the strongest available static/specification evidence, clearly labeled. Do not treat an unverified issue description as a reproduced fact.
+
 
 1. Start with the symptom and expected/actual difference.
 2. Build a local model; do not attempt to model the entire repository before useful investigation begins.
@@ -84,7 +89,7 @@ If investigation is incomplete, return `blocked` or `needs_revision` and explain
 
 ## Tool-use trace
 
-During investigation, record important commands, files inspected, and findings in the handoff report. If a longer audit record is needed, use `run_command` to append it under `/tmp`; do not use `read_file` or `write_file` on `/tmp`.
+Store canonical task and handoff records under `/workspace/.agent_state/<run-id>/` so they persist and can be inspected after the run. Use `run_command` to create/read/append them. Exclude `.agent_state/` through `/workspace/.git/info/exclude` and verify the exclusion before writing, so records cannot enter the patch. Use `/tmp` only for ordinary scratch/reproduction files, not canonical run records.
 
 
 Workers may be split by Entity or investigation area, but a Relationship can cross those boundaries. Architect maintains the issue-level interpretation of cross-entity Relationships and reconciles conflicting local findings. This does not prevent a Worker from proposing a correction with evidence.

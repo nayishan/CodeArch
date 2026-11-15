@@ -21,11 +21,13 @@ If critical context is missing, request it or create a bounded intake task. Do n
 
 ## Procedure
 
-### 1. Establish the task envelope
+### 1. Establish the task envelope without technical investigation
 
-Create or update a canonical task board and stable run ID before dispatch. Record the issue and symptom, expected-behavior source, repository and submission revisions, task/data version, environment constraints, edit restrictions, available resources, and stage completion criteria. Separate issue status from task status; mark unknown provenance unavailable rather than guessing.
+Create the minimal canonical task board and assign the next stable task/run identifiers before dispatch. Record only the raw issue, expected-behavior source if supplied, repository/base revision, environment constraints, edit restrictions, and stage completion criteria. Do not inspect source, search symbols/call graphs, run a reproduction, infer causes, or choose technical work packages at intake. Repository context is metadata for Architect, not permission for PM investigation.
 
-### 2. Obtain technical decomposition
+Immediately call Architect for initial reproduction or characterization and semantic diagnosis. If the Architect handoff is empty, malformed, or fails, record the failure and retry with the same task number; do not investigate or assign Workers as a substitute.
+
+### 2. Obtain technical decomposition from Architect
 
 Ask Architect for:
 - the current bug-centric model;
@@ -92,22 +94,28 @@ If diagnosis remains uncertain, authorize a narrow diagnostic change or experime
 
 ### 8. Preserve provenance and close the coordination loop
 
-For every execution, preserve Git and submission/config revisions, task/data version, model/harness when known, exact commands, timing, tool usage, results, traces, and patches. Store them in the canonical run record; mark unavailable values explicitly.
+For every execution, preserve Git and submission/config revisions, task/data version, model/harness when known, exact commands, timing, tool usage, results, traces, and patches. Store the canonical task board, delivery register, history, and reports under `/workspace/.agent_state/<run-id>/` using `run_command`, not `/tmp`. Ensure `.agent_state/` is excluded through `/workspace/.git/info/exclude` before writing so it cannot enter the patch. Mark unavailable provenance explicitly.
 
 Close only after required Worker deliverables are registered; Checker findings are resolved or accepted as limitations; tests and skipped checks are recorded; patch reference and changed files are known; risks, provenance, and handoff history are preserved; and Evaluator can access process records when evaluation is required.
 
-## Decision rules
+### Phase gates
+
+Use these phases explicitly: `intake` (PM records and delegates only), `architect_diagnosis` (Architect performs initial reproduction/characterization and model building), `worker_investigation` (Worker performs bounded experiments or authorized repair), `independent_review` (Checker reviews independently), and `coordination_close` (PM records outcome; Evaluator assesses process when assigned). Do not enter Worker investigation until a valid Architect report defines the relevant questions, hypotheses, evidence gaps, and dependencies.
+
 
 - **Blocked**: a concrete dependency or missing input prevents progress. Assign an unblock action.
 - **Needs revision**: the deliverable exists but fails its stated acceptance criteria. Return specific findings.
 - **Completed**: the task deliverable is supplied; this does not imply the issue is fixed.
 - **Issue resolved**: only use when the technical acceptance criteria are met within the stated validation scope.
 
-## Tool boundary and handoff storage
+## Run-record storage
 
-The official file tools `read_file`, `write_file`, and `edit_file` are restricted to repository paths under `/workspace`. Never pass a `/tmp` path to them. For temporary state, intermediate reports, and audit logs under `/tmp`, use `run_command` with shell or Python to create, read, and append files. Keep temporary files out of `/workspace` so they cannot enter the patch.
+Store the canonical task board, delivery register, append-only history, and agent reports under `/workspace/.agent_state/<run-id>/` so records persist and can be inspected after the run. Use `run_command` to create, read, and append these records. Do not use `read_file`, `write_file`, or `edit_file` for paths outside `/workspace`.
 
-The `agent_tool` return value is the primary Agent-to-Agent handoff. `/tmp` is supplementary state and audit storage; do not assume it is shared across separate `agent_tool` calls until the harness verifies that behavior.
+Before writing run records, use `run_command` to add `.agent_state/` to `/workspace/.git/info/exclude` if it is not already ignored, then verify with `git -C /workspace check-ignore -q .agent_state/<run-id>/task_board.yaml`. Never add run records to the repository or patch. Ordinary scratch/reproduction files may use `/tmp`; they are not canonical run records.
+
+The `agent_tool` return value remains the primary Agent-to-Agent handoff. Do not rely on filesystem sharing across separate `agent_tool` calls unless verified in the runtime.
+
 
 
 Maintain one canonical, inspectable task board and delivery register per issue/run, plus append-only status and handoff history. Use YAML, JSON, Markdown table, or another format readable by available agents. Keep core fields stable and extend the record when real work exposes a need. Preserve it where subsequent agents and Evaluator can read it. Keep technical diagnosis in Architect's model rather than duplicating it as managerial prose.

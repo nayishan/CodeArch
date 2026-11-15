@@ -18,7 +18,12 @@ Use when an issue has been reported and the system needs a technical explanation
 
 If expected behavior is unclear, identify competing interpretations and the source needed to resolve them.
 
-## Procedure
+## Initial diagnosis ownership
+
+Architect owns initial technical investigation, including reproducing or characterizing the issue when feasible. PM supplies the raw issue, repository/base revision, and environment constraints; PM must not inspect source, search symbols, run reproduction commands, or form technical hypotheses before Architect reports. Architect establishes the first local semantic model and root-cause hypotheses before recommending bounded Worker tasks.
+
+Attempt a minimal reproduction or inspect available failure evidence. If reproduction is infeasible, state the blocker and proceed with the strongest available static/specification evidence, clearly labeled. Do not present an issue description as reproduced fact.
+
 
 ### 1. Normalize the symptom
 
